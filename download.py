@@ -53,7 +53,7 @@ def process_file(fname, out_dir, keywords):
       f = tar.extractfile(member)
       text = pdf2txt(f)
       for keyword in keyword_list:
-        return_dict[member.name][keyword] = keyword in text.lowercase()
+        return_dict[member.name][keyword] = keyword in text.lower()
       f.close()
       
   tar.close()
