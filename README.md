@@ -1,14 +1,16 @@
 ## arXiv-keyword-searcher
 
-#### Prerequisites 
+#### Prerequisites
 
-ArXiv provides [bulk data access](https://github.com/user/repo/blob/branch/other_file.md) through [Amazon S3](https://aws.amazon.com/s3). You need an account with [Amazon AWS](https://aws.amazon.com/free) to be able to download the data. You also need python 2.
+**Only tested with Python 3**
+
+ArXiv provides [bulk data access](https://github.com/user/repo/blob/branch/other_file.md) through [Amazon S3](https://aws.amazon.com/s3). You need an account with [Amazon AWS](https://aws.amazon.com/free) to be able to download the data.
 
 
 #### Downloading and search arXiv documents for keywords
 1- Install [s3cmd](https://github.com/s3tools/s3cmd) which is a command line tool for interacting with S3
 
-`pip install s3cmd` (only works on python 2)
+`pip install s3cmd`
 
 2- Configure your s3cmd by entering credentials found in the account management tab of the Amazon AWS website
 
