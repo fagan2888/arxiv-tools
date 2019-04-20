@@ -1,11 +1,11 @@
-## arXiv-tools
+## arXiv-keyword-searcher
 
 #### Prerequisites 
 
 ArXiv provides [bulk data access](https://github.com/user/repo/blob/branch/other_file.md) through [Amazon S3](https://aws.amazon.com/s3). You need an account with [Amazon AWS](https://aws.amazon.com/free) to be able to download the data. You also need python 2.
 
 
-#### Downloading arXiv documents
+#### Downloading and search arXiv documents for keywords
 1- Install [s3cmd](https://github.com/s3tools/s3cmd) which is a command line tool for interacting with S3
 
 `pip install s3cmd` (only works on python 2)
@@ -14,30 +14,20 @@ ArXiv provides [bulk data access](https://github.com/user/repo/blob/branch/other
 
 `s3cmd --configure`
 
-3- Get the manifest files:
+3- Install pdfminer.six to get text from a pdf on the fly
 
-The complete set of arXiv files available from Amazon S3 in requester pays buckets. The files are in .tar format each with ~500MB size. You need to have the keys to these chunks to be able to download them. The complete list of these keys is provided in the `manifest` files. First download the manifests:
+```
+pip install pdfminer.six
+```
 
-For PDF documents:
+4- Search arxiv for particular keywords
 
-`s3cmd get --requester-pays s3://arxiv/pdf/arXiv_pdf_manifest.xml local-directory/arXiv_pdf_manifest.xml`
+For example, searching for "resnet", "googlenet" and "alexnet".
+The keyword search is case-insensitive
 
-For source documents:
+```bash
+python download.py --keywords "resnet,googlenet,alexnet"
+```
 
-`s3cmd get --requester-pays s3://arxiv/src/arXiv_src_manifest.xml local-directory/arXiv_src_manifest.xml`
-
-4- Download the actual pdf and source files using the `download.py` script
-
-Download pdf files:
-
-`python download.py --manifest_file /path/to/pdf-manifest --mode pdf --output_dir /path/to/output`
-
-Download source files:
-
-`python download.py --manifest_file /path/to/src-manifest --mode src --output_dir /path/to/output`
-
-This will download all the files in the directory that you designated as output. 
-
-If you also need the metadata, use [metha](https://github.com/miku/metha) to bulk download the metadata.
-
-
+We store the results database in a pickle file (Default: `db.pkl`).
+When you run download.py again, it checks for this file and skips processing the files from arxiv that were already processed.
