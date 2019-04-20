@@ -13,6 +13,8 @@ import re
 import multiprocessing
 from functools import partial
 import itertools
+import signal
+import time
 
 def pdf2txt(fp):
   output = StringIO()
@@ -40,6 +42,24 @@ def save_db(db, filename):
   with open(filename, 'wb') as handle:
     pickle.dump(db, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+class Timeout():
+  """Timeout class using ALARM signal."""
+  class Timeout(Exception):
+    pass
+
+  def __init__(self, sec):
+    self.sec = sec
+
+  def __enter__(self):
+    signal.signal(signal.SIGALRM, self.raise_timeout)
+    signal.alarm(self.sec)
+
+  def __exit__(self, *args):
+    signal.alarm(0)    # disable alarm
+
+  def raise_timeout(self, *args):
+    raise Timeout.Timeout()
+
 def process_file(fname, out_dir, keywords):
   keyword_list = keywords.split(',')
   return_dict = {}
@@ -47,17 +67,31 @@ def process_file(fname, out_dir, keywords):
   out_fname = '%s/%s' % (out_dir, fname)
   get_file(fname, out_fname, '--skip-existing')
   tar = tarfile.TarFile(out_fname)
-  for member in tar.getmembers():
+  tar_members = list(tar.getmembers())
+  for i, member in zip(range(len(tar_members)), tar.getmembers()):
     if re.match('[0-9]*/[0-9]{4}\.[0-9]{4}\.pdf', member.name):
+      print("Processing file (%d / %d) in %s : %s: " % (i, len(tar_members), fname, member.name))
       return_dict[member.name] = {}
       f = tar.extractfile(member)
-      text = pdf2txt(f)
+      # timeout of 120 seconds, some pdf2txt calls take way too long
+      text = ""
+      try:
+        with Timeout(120):
+          text = pdf2txt(f)
+      except Timeout.Timeout:
+        print("Failed: Timed out while processing " + member.name)
+        text = ""
+      except:
+        print("Failed: Errored while processing " + member.name)
+        traceback.print_exc()
+        # print(str(e))
       for keyword in keyword_list:
         return_dict[member.name][keyword] = keyword in text.lower()
       f.close()
       
   tar.close()
   # delete file
+  print("Finished processing and removing %s" % (fname,))
   os.remove(out_fname)
   return return_dict
 
@@ -95,14 +129,17 @@ def main(**args):
 
   print("Total files to process: ", len(file_list))
   pool = multiprocessing.Pool(processes=40)
-  for files in grouped(file_list, 20):
+  for files in grouped(file_list, 80):
     pool_arg = partial(process_file, out_dir=out_dir, keywords=keywords)
-    counts = pool.map(pool_arg, files, 1)
+    print("Mapping tasks")
+    counts = pool.map(pool_arg, files, 2)
+    print("Updating database with counts")
     for filen, count in zip(files, counts):
       db['processed_tars'].add(filen)
       db['pdfs'].update(count)
       log_file.write(filen + '\n')
       log_file.write(str(count) + '\n')
+      log_file.flush()
     save_db(db, db_file)
   pool.close()
   pool.join()    
