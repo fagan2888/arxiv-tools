@@ -69,7 +69,7 @@ def process_file(fname, out_dir, keywords):
   tar = tarfile.TarFile(out_fname)
   tar_members = list(tar.getmembers())
   for i, member in zip(range(len(tar_members)), tar.getmembers()):
-    if re.match('[0-9]*/[0-9]{4}\.[0-9]{4}\.pdf', member.name):
+    if re.match('[0-9]*/[0-9]{4}\.[0-9]*\.pdf', member.name):
       print("Processing file (%d / %d) in %s : %s: " % (i, len(tar_members), fname, member.name))
       return_dict[member.name] = {}
       f = tar.extractfile(member)
