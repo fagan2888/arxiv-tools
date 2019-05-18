@@ -24,6 +24,8 @@ def main(**args):
 
     print("Monthly Counts:")
     print(counts)
+    with open("monthly_summary.pkl", 'wb') as handle:
+        pickle.dump(counts, handle, protocol=2)
     
     total_counts = defaultdict(int)
     for month, keywords in counts.items():
